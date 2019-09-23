@@ -17,6 +17,30 @@ CREATE TABLE Usuarios(
 	contraseña varchar(25) not null
 )
 
+CREATE TABLE Partidos(
+	id smallint identity not null constraint pk_id_partidos primary key,
+	--------------------------------------------------------------------------
+	golLocal tinyint not null
+		constraint ck_partidos_golLocal check (golLocal >= 0),
+	golVisitante tinyint not null
+		constraint ck_partidos_golVisitante check (golVisitante >= 0),
+	apuestasMáximas int not null
+		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
+	fechaInicio DATETIME not null,
+	fechaFin DATETIME not null,
+	nombreLocal varchar(20) not null,
+	nombreVisitante varchar(20) not null,
+)
+
+CREATE TABLE Ingresos(
+	id smallint identity not null constraint pk_id_ingresos primary key,
+	--------------------------------------------------------------------------
+	cantidad int not null,
+	descripcion varchar(15) null,
+	id_usuario smallint not null,
+	constraint fk_id_usuario_Ingresos foreign key (id_usuario) references Usuarios(id)
+)
+
 CREATE TABLE Apuestas(
 	id smallint identity not null constraint pk_id_apuestas primary key,
 	--------------------------------------------------------------------------
@@ -34,33 +58,10 @@ CREATE TABLE Apuestas(
 	golVisitante tinyint null
 		constraint ck_Apuestas_golVisitante check(golVisitante >= 0),
 	--------------------------------------------------------------------------
-	id_usuario smallint not null,
-	constraint fk_id_usuarios foreign key (id_usuario) references Usuarios(id)
-	id_partido smallint not null,
+	id_usuario smallint not null
+	constraint fk_id_usuarios foreign key (id_usuario) references Usuarios(id),
+	id_partido smallint not null
 	constraint fk_id_partidos foreign key (id_partido) references Partidos(id)
 )
 
-CREATE TABLE Ingresos(
-	id smallint identity not null constraint pk_id_ingresos primary key,
-	--------------------------------------------------------------------------
-	cantidad int not null,
-	descripcion varchar(15) null,
-	id_usuario smallint not null,
-	constraint fk_id_usuario_Ingresos foreign key (id_usuario) references Usuarios(id)
-)
-
-CREATE TABLE Partidos(
-	id smallint identity not null constraint pk_id_partidos primary key,
-	--------------------------------------------------------------------------
-	golLocal tinyint not null
-		constraint ck_partidos_golLocal check (golLocal >= 0),
-	golVisitante tinyint not null
-		constraint ck_partidos_golVisitante check (golVisitante >= 0),
-	apuestasMáximas int not null
-		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
-	fechaInicio DATETIME not null,
-	fechaFin DATETIME not null,
-	nombreLocal varchar(20) not null,
-	nombreVisitante varchar(20) not null,
-)
 
