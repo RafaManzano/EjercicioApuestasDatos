@@ -45,6 +45,7 @@ CREATE PROCEDURE comprobarApuestaAcertada @idApuesta INT, @tipo INT
 AS
 BEGIN
 DECLARE @acertada BIT
+SET @acertada = 0
 	IF(@tipo = 1)
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
