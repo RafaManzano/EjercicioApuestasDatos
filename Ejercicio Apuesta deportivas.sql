@@ -57,6 +57,7 @@ CREATE TABLE Apuestas(
 		constraint ck_Apuestas_golLocal check(golLocal >= 0),
 	golVisitante tinyint null
 		constraint ck_Apuestas_golVisitante check(golVisitante >= 0),
+	fechaHora datetime not null,
 	--------------------------------------------------------------------------
 	id_usuario smallint not null
 	constraint fk_id_usuarios foreign key (id_usuario) references Usuarios(id),
