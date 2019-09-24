@@ -24,7 +24,7 @@ CREATE TABLE Partidos(
 		constraint ck_partidos_golLocal check (golLocal >= 0),
 	golVisitante tinyint not null
 		constraint ck_partidos_golVisitante check (golVisitante >= 0),
-	apuestasMáximas int not null
+	apuestasMáximas money not null
 		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
 	fechaInicio DATETIME not null,
 	fechaFin DATETIME not null,
