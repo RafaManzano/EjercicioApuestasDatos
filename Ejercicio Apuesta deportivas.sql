@@ -1,12 +1,13 @@
 --Ejercicio de acceso de datos sobre las apuestas deportivas.
 --Los intengrantes del grupo son: Rafa manzano, victor perez, y miguel espigares.
 --
-
+--USE master
 CREATE DATABASE ApuestasDeportivas
 Go
 USE ApuestasDeportivas
 Go
 
+--DROP DATABASE ApuestasDeportivas
 CREATE TABLE Usuarios(
 	id smallint identity not null  constraint pk_id_usuarios primary key, 
 	--------------------------------------------------------------------------
@@ -52,7 +53,6 @@ CREATE TABLE Apuestas(
 		constraint ck_Apuestas_tipo check(tipo in ('1','2','3')),
 	puja char(1) null
 		constraint ck_Apuestas_puja check(puja in ('1','x','2')),
-	acertada bit not null,
 	golLocal tinyint null
 		constraint ck_Apuestas_golLocal check(golLocal >= 0),
 	golVisitante tinyint null
