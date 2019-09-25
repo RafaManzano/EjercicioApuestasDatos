@@ -12,7 +12,7 @@ CREATE TABLE Usuarios(
 	id smallint identity not null  constraint pk_id_usuarios primary key, 
 	--------------------------------------------------------------------------
 	saldo money not null
-		constraint ck_Usuarios_saldo check(saldo > 0),
+		constraint ck_Usuarios_saldo check(saldo >= 0),
 	correo varchar(30) null,
 		constraint ck_Usuarios_correo check(correo LIKE '[%@%]'),
 	contraseña varchar(25) not null
@@ -47,7 +47,7 @@ CREATE TABLE Apuestas(
 	--------------------------------------------------------------------------
 	cuota decimal(5,2) not null
 		constraint ck_Apuestas_cuota check(cuota > 1),
-	cantidad int not null
+	cantidad money not null
 		constraint ck_Apuestas_cantidad check(cantidad > 0),
 	tipo tinyint not null
 		constraint ck_Apuestas_tipo check(tipo in ('1','2','3')),
