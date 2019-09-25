@@ -1,7 +1,7 @@
 USE ApuestasDeportivas
 --USE master
 --En la tabla ingresos cuando se hace un insert hay que hacer un trigger que aumente el saldo del usuario 
---(Cuando se retira también funcionaria igual).
+--(Cuando se retira tambiÃ©n funcionaria igual).
 GO
 CREATE TRIGGER modificarSaldo ON Ingresos
 AFTER INSERT AS
@@ -14,7 +14,7 @@ AFTER INSERT AS
 	END
 GO
 
--- Cuando una apuesta está en la BBDD, no se puede eliminar ni modificar. Un trigger ayudaría
+-- Cuando una apuesta estÃ¡ en la BBDD, no se puede eliminar ni modificar. Un trigger ayudarÃ­a
 GO
 CREATE TRIGGER noModificarApuestas ON Apuestas
 INSTEAD OF DELETE, UPDATE AS
@@ -77,4 +77,31 @@ SET @acertada = 0
 	END
 	RETURN @acertada
 END
+GO
+
+--1er Trigger actualiza el saldo del usuario cuando realiza una apuesta
+GO	
+CREATE OR ALTER TRIGGER actualizarSaldo on Apuestas
+AFTER INSERT AS
+	BEGIN
+		DECLARE @saldo money
+		DECLARE @cantidad int
+		DECLARE @id_usuario smallint 
+		SELECT @saldo = U.saldo, @cantidad=I.cantidad, @id_usuario=U.id FROM Usuarios AS U 
+		INNER JOIN inserted AS I ON U.id = I.id_usuario
+
+		
+		IF(@cantidad > @saldo)
+			BEGIN
+				RAISERROR('No tiene suficiente saldo',16,1)
+				ROLLBACK
+			END
+		ELSE
+			BEGIN
+				UPDATE Usuarios
+				SET saldo -= @cantidad WHERE id=@id_usuario
+				--Insertamos el ingreso
+				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad,'Apuesta',@id_usuario)
+			END
+	END
 GO
