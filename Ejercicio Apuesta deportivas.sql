@@ -14,7 +14,7 @@ CREATE TABLE Usuarios(
 	saldo money not null
 		constraint ck_Usuarios_saldo check(saldo >= 0),
 	correo varchar(30) null,
-		constraint ck_Usuarios_correo check(correo LIKE '[%@%]'),
+		constraint ck_Usuarios_correo check(correo LIKE '%@%'),
 	contraseña varchar(25) not null
 )
 
