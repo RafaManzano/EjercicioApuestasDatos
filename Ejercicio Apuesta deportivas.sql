@@ -64,5 +64,3 @@ CREATE TABLE Apuestas(
 	id_partido smallint not null
 	constraint fk_id_partidos foreign key (id_partido) references Partidos(id)
 )
-
-

@@ -20,12 +20,10 @@ AFTER INSERT AS
 				UPDATE Usuarios
 				SET saldo -= @cantidad WHERE id=@id_usuario
 				--Insertamos el ingreso
-				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad,'Apuesta',@id_usuario)
+				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad,'Apuesta realizada',@id_usuario)
 			END
 	END
 GO
 
-GO
-CREATE PROCEDURE
-GO
+
 
