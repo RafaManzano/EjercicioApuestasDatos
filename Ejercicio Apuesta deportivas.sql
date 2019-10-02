@@ -27,8 +27,8 @@ CREATE TABLE Partidos(
 		constraint ck_partidos_golVisitante check (golVisitante >= 0),
 	apuestasMáximas money not null
 		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
-	fechaInicio DATETIME not null,
-	fechaFin DATETIME not null,
+	fechaInicio SMALLDATETIME not null,
+	fechaFin SMALLDATETIME not null,
 	nombreLocal varchar(20) not null,
 	nombreVisitante varchar(20) not null,
 )
@@ -57,7 +57,7 @@ CREATE TABLE Apuestas(
 		constraint ck_Apuestas_golLocal check(golLocal >= 0),
 	golVisitante tinyint null
 		constraint ck_Apuestas_golVisitante check(golVisitante >= 0),
-	fechaHora datetime not null,
+	fechaHora SMALLDATETIME not null,
 	--------------------------------------------------------------------------
 	id_usuario smallint not null
 	constraint fk_id_usuarios foreign key (id_usuario) references Usuarios(id),

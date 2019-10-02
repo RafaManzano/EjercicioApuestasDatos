@@ -1,5 +1,8 @@
 USE ApuestasDeportivas
 --USE master
+/*
+	Tambien nos puede venir bien que diga en la apuesta un atributo booleano que refleje que la apuesta este abierta o cerrada
+*/
 --En la tabla ingresos cuando se hace un insert hay que hacer un trigger que aumente el saldo del usuario 
 --(Cuando se retira también funcionaria igual).
 GO
@@ -31,7 +34,7 @@ AFTER INSERT AS
 	BEGIN
 		IF EXISTS (SELECT * FROM inserted AS I
 		INNER JOIN Partidos AS P ON I.id_partido = P.id
-		WHERE I.fechaHora NOT BETWEEN P.fechaInicio AND P.fechaFin) 
+		WHERE I.fechaHora NOT BETWEEN DATEADD(DAY, -2, P.fechaInicio) AND DATEADD(MINUTE, -10, P.fechaFin)) 
 		BEGIN
 			RAISERROR ('La apuesta para ese partido no ha empezado o se ha cerrado', 16,1)
 			ROLLBACK
@@ -60,7 +63,7 @@ SET @acertada = 0
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
 		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
-		WHERE A.puja = '1' AND A.golLocal = P.golVisitante OR A.puja = '2' AND A.golVisitante = P.golVisitante)
+		WHERE A.puja = '1' AND A.golLocal = P.golLocal OR A.puja = '2' AND A.golVisitante = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
@@ -70,11 +73,48 @@ SET @acertada = 0
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
 		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
-		WHERE A.puja = '1' AND P.golLocal > P.golVisitante OR A.puja = '2' AND P.golLocal < P.golVisitante OR A.puja = 'x' AND P.golLocal = P.golVisitante)
+		WHERE A.puja = '1' AND P.golLocal > P.golVisitante OR A.puja = '2' AND P.golLocal < P.golVisitante OR A.puja = 'x' 
+		AND P.golLocal = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
 	END
 	RETURN @acertada
 END
+GO
+
+/*
+Trigger que no se pueda modificar despues de concluir la finalizacion del partido
+*/
+GO
+CREATE TRIGGER partidoFinalizado ON Partidos
+AFTER UPDATE AS 
+	BEGIN
+		IF EXISTS (SELECT * FROM inserted AS I
+		INNER JOIN Partidos AS P ON I.id = P.id
+		--INNER JOIN deleted AS D ON P.id = D.id
+		WHERE GETDATE() > DATEADD(MINUTE, -10, P.fechaFin)) 
+		BEGIN
+			RAISERROR ('El partido se ha cerrado y no se permite mas modificaciones', 16,1)
+			ROLLBACK
+		END
+	END
+GO
+
+/*
+	Trigger que no se pueda antes de empezar el partido modificar el marcador
+*/
+GO
+CREATE TRIGGER modificarMarcador ON Partidos
+AFTER UPDATE, INSERT AS 
+	BEGIN
+		IF EXISTS (SELECT * FROM inserted AS I
+		INNER JOIN Partidos AS P ON I.id = P.id
+		--INNER JOIN deleted AS D ON P.id = D.id
+		WHERE GETDATE() < DATEADD(DAY, -2, P.fechaInicio) AND I.golLocal > 0 AND I.golVisitante > 0) 
+		BEGIN
+			RAISERROR ('El partido no ha empezado o los goles deben ser 0 a 0', 16,1)
+			ROLLBACK
+		END
+	END
 GO
