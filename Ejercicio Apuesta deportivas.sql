@@ -25,10 +25,8 @@ CREATE TABLE Partidos(
 		constraint ck_partidos_golLocal check (golLocal >= 0),
 	golVisitante tinyint not null
 		constraint ck_partidos_golVisitante check (golVisitante >= 0),
-	apuestasMáximas money not null
-		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
-	fechaInicio SMALLDATETIME not null,
-	fechaFin SMALLDATETIME not null,
+	fechaInicio DATETIME not null,
+	fechaFin DATETIME not null,
 	nombreLocal varchar(20) not null,
 	nombreVisitante varchar(20) not null,
 )
@@ -49,18 +47,41 @@ CREATE TABLE Apuestas(
 		constraint ck_Apuestas_cuota check(cuota > 1),
 	cantidad money not null
 		constraint ck_Apuestas_cantidad check(cantidad > 0),
-	tipo tinyint not null
+	tipo char(1) not null
 		constraint ck_Apuestas_tipo check(tipo in ('1','2','3')),
-	puja char(1) null
-		constraint ck_Apuestas_puja check(puja in ('1','x','2')),
-	golLocal tinyint null
-		constraint ck_Apuestas_golLocal check(golLocal >= 0),
-	golVisitante tinyint null
-		constraint ck_Apuestas_golVisitante check(golVisitante >= 0),
-	fechaHora SMALLDATETIME not null,
+	fechaHora datetime not null,
 	--------------------------------------------------------------------------
 	id_usuario smallint not null
 	constraint fk_id_usuarios foreign key (id_usuario) references Usuarios(id),
 	id_partido smallint not null
 	constraint fk_id_partidos foreign key (id_partido) references Partidos(id)
+)
+
+CREATE TABLE Apuestas_tipo1(
+	id smallint identity not null constraint pk_id_apuestas_tipo1 primary key,
+	--------------------------------------------------------------------------
+	apuestasMáximas money not null
+		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
+	golLocal tinyint null
+		constraint ck_Apuestas_tipo1_golLocal check(golLocal >= 0),
+	golVisitante tinyint null
+		constraint ck_Apuestas_tipo1_golVisitante check(golVisitante >= 0),
+	constraint fk_Apuestas_tipo1 foreign key (id) references Apuestas(id)
+)
+
+CREATE TABLE Apuestas_tipo2(
+	id smallint identity not null constraint pk_id_apuestas_tipo2 primary key,
+	--------------------------------------------------------------------------
+	apuestasMáximas money not null
+		constraint ck_Apuesta_tipo2_apuestasMáximas check (apuestasMáximas > 0),
+	fechaHora datetime not null,
+	constraint fk_Apuestas_tipo2 foreign key (id) references Apuestas(id)
+)
+
+CREATE TABLE Apuestas_tipo3(
+	id smallint identity not null constraint pk_id_apuestas_tipo3 primary key,
+	--------------------------------------------------------------------------
+	apuestasMáximas money not null
+		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
+	constraint fk_Apuestas_tipo3 foreign key (id) references Apuestas(id)
 )
