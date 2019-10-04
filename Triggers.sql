@@ -31,7 +31,7 @@ AFTER INSERT AS
 	BEGIN
 		IF EXISTS (SELECT * FROM inserted AS I
 		INNER JOIN Partidos AS P ON I.id_partido = P.id
-		WHERE I.fechaHora NOT BETWEEN P.fechaInicio AND P.fechaFin) 
+		WHERE I.fechaHora NOT BETWEEN DATEADD(DAY, -2, P.fechaInicio) AND P.fechaFin) 
 		BEGIN
 			RAISERROR ('La apuesta para ese partido no ha empezado o se ha cerrado', 16,1)
 			ROLLBACK
@@ -50,7 +50,8 @@ SET @acertada = 0
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
 		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
-		WHERE A.golLocal = P.golLocal AND A.golVisitante = P.golVisitante)
+		INNER JOIN Apuestas_tipo1 AS A1 ON  A1.id = A.id
+		WHERE A1.golLocal = P.golLocal AND A1.golVisitante = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
@@ -60,7 +61,8 @@ SET @acertada = 0
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
 		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
-		WHERE A.puja = '1' AND A.golLocal = P.golVisitante OR A.puja = '2' AND A.golVisitante = P.golVisitante)
+		INNER JOIN Apuestas_tipo2 AS A2 ON  A2.id = A.id
+		WHERE A2.puja = '1' AND A2.gol = P.golLocal OR A2.puja = '2' AND A2.gol = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
@@ -70,7 +72,8 @@ SET @acertada = 0
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
 		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
-		WHERE A.puja = '1' AND P.golLocal > P.golVisitante OR A.puja = '2' AND P.golLocal < P.golVisitante OR A.puja = 'x' AND P.golLocal = P.golVisitante)
+		INNER JOIN Apuestas_tipo3 AS A3 ON  A3.id = A.id
+		WHERE A3.puja = '1' AND P.golLocal > P.golVisitante OR A3.puja = '2' AND P.golLocal < P.golVisitante OR A3.puja = 'x' AND P.golLocal = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
