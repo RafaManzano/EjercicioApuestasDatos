@@ -78,7 +78,7 @@ CREATE TABLE Apuestas_tipo2(
 	gol tinyint not null
 		constraint ck_Apuestas_tipo2_gol check(gol >= 0),
 	puja char(1) not null
-		constraint ck_Apuestas_tipo2_puja check(puja in ('1','2','3')),
+		constraint ck_Apuestas_tipo2_puja check(puja in ('1','x','3')),
 	constraint fk_Apuestas_tipo2 foreign key (id) references Apuestas(id)
 )
 
@@ -88,6 +88,6 @@ CREATE TABLE Apuestas_tipo3(
 	apuestasMáximas money not null
 		constraint ck_partidos_apuestasMáximas check (apuestasMáximas > 0),
 	puja char(1) not null
-		constraint ck_Apuestas_tipo3_puja check(puja in ('1','2','3'))
+		constraint ck_Apuestas_tipo3_puja check(puja in ('1','x','3'))
 	constraint fk_Apuestas_tipo3 foreign key (id) references Apuestas(id)
 )
