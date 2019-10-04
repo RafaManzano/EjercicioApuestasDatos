@@ -78,3 +78,75 @@ SET @acertada = 0
 	RETURN @acertada
 END
 GO
+
++GO
+
+/*
+Trigger que no se pueda modificar despues de concluir la finalizacion del partido
+*/
+GO
+CREATE TRIGGER partidoFinalizado ON Partidos
+AFTER UPDATE AS 
+	BEGIN
+		IF EXISTS (SELECT * FROM inserted AS I
+		INNER JOIN Partidos AS P ON I.id = P.id
+		--INNER JOIN deleted AS D ON P.id = D.id
+		WHERE GETDATE() > DATEADD(MINUTE, -10, P.fechaFin)) 
+		BEGIN
+			RAISERROR ('El partido se ha cerrado y no se permite mas modificaciones', 16,1)
+			ROLLBACK
+		END
+	END
+GO
+
+/*
+	Trigger que no se pueda antes de empezar el partido modificar el marcador
+*/
+GO
+CREATE TRIGGER modificarMarcador ON Partidos
+AFTER UPDATE, INSERT AS 
+	BEGIN
+		IF EXISTS (SELECT * FROM inserted AS I
+		INNER JOIN Partidos AS P ON I.id = P.id
+		--INNER JOIN deleted AS D ON P.id = D.id
+		WHERE GETDATE() < DATEADD(DAY, -2, P.fechaInicio) AND I.golLocal > 0 AND I.golVisitante > 0) 
+		BEGIN
+			RAISERROR ('El partido no ha empezado o los goles deben ser 0 a 0', 16,1)
+			ROLLBACK
+		END
+	END
+GO
+
+--1er Trigger actualiza el saldo del usuario cuando realiza una apuesta
+GO	
+CREATE OR ALTER TRIGGER actualizarSaldo on Apuestas
+AFTER INSERT AS
+	BEGIN
+		DECLARE @saldo money
+		DECLARE @cantidad int
+		DECLARE @id_usuario smallint 
+		SELECT @saldo = U.saldo, @cantidad=I.cantidad, @id_usuario=U.id FROM Usuarios AS U 
+		INNER JOIN inserted AS I ON U.id = I.id_usuario
+
+		
+		IF(@cantidad > @saldo)
+			BEGIN
+				RAISERROR('No tiene suficiente saldo',16,1)
+				ROLLBACK
+			END
+		ELSE
+			BEGIN
+				UPDATE Usuarios
+				SET saldo -= @cantidad WHERE id=@id_usuario
+				--Insertamos el ingreso
+				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad,'Apuesta realizada',@id_usuario)
+			END
+	END
+GO
+
+/*
+	Comprobar los beneficios maximos para no dejar pagar la apuesta
+*/
+
+-- Se comprueba que en cada apuesta ganada no se supere el maximo beneficio definido en la tabla
+-- Si esto ocurre, el pago de la apuesta quedaria anulada
