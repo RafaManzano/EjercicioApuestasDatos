@@ -225,4 +225,23 @@ GO
 --Inserts
 
 INSERT INTO Usuarios
-VALUES (500,'aabb@gmail.com','1234'),(5000,'')
+VALUES (500,'aabb@gmail.com','1234'),(5000,'bbb@gmail.com','5678'),(8000,'gmasd@gmail.com','9123')
+
+INSERT INTO Ingresos (cantidad,descripcion,id_usuario)
+VALUES (300,'Ingreso',1),(-300,'Reintegro',2),(2000,'Ingreso',3)
+
+INSERT INTO Partidos 
+VALUES(3,2,'12-01-2019 12:00','12-01-2019 13:45','Sevilla','Betis'),(0,5,'13-01-2019 13:00','13-01-2019 14:45','Carmona','Coria'),
+(2,2,'03-03-2019 22:00','03-03-2019 23:45','Barcelona','Madrid')
+
+INSERT INTO Apuestas
+VALUES (1.2,50,1,'11-01-2019 12:00',1,1),(2.0,20,1,'12-01-2019 12:00',2,2),(2.50,300,1,'02-03-2019 12:00',3,3)
+
+INSERT INTO Apuestas_tipo1
+VALUES (1,500,3,2)
+
+INSERT INTO Apuestas_tipo2
+VALUES (2,1000,5,'2')
+
+INSERT INTO Apuestas_tipo3
+VALUES (3,10000,'x')

@@ -48,7 +48,7 @@ CREATE TABLE Apuestas(
 	cantidad money not null
 		constraint ck_Apuestas_cantidad check(cantidad > 0),
 	tipo char(1) not null
-		constraint ck_Apuestas_tipo check(tipo in ('1','2','x')),
+		constraint ck_Apuestas_tipo check(tipo in ('1','2','3')),
 	fechaHora datetime not null,
 	--------------------------------------------------------------------------
 	id_usuario smallint not null
@@ -58,7 +58,7 @@ CREATE TABLE Apuestas(
 )
 
 CREATE TABLE Apuestas_tipo1(
-	id smallint identity not null constraint pk_id_apuestas_tipo1 primary key,
+	id smallint not null constraint pk_id_apuestas_tipo1 primary key,
 	--------------------------------------------------------------------------
 	apuestasMáximas money not null
 		constraint ck_partidos_tipo2_apuestasMáximas check (apuestasMáximas > 0),
@@ -70,20 +70,19 @@ CREATE TABLE Apuestas_tipo1(
 )
 
 CREATE TABLE Apuestas_tipo2(
-	id smallint identity not null constraint pk_id_apuestas_tipo2 primary key,
+	id smallint not null constraint pk_id_apuestas_tipo2 primary key,
 	--------------------------------------------------------------------------
 	apuestasMáximas money not null
 		constraint ck_Apuesta_tipo2_apuestasMáximas check (apuestasMáximas > 0),
-	fechaHora datetime not null,
 	gol tinyint not null
 		constraint ck_Apuestas_tipo2_gol check(gol >= 0),
 	puja char(1) not null
-		constraint ck_Apuestas_tipo2_puja check(puja in ('1','x','2')),
+		constraint ck_Apuestas_tipo2_puja check(puja in ('1','2')),
 	constraint fk_Apuestas_tipo2 foreign key (id) references Apuestas(id)
 )
 
 CREATE TABLE Apuestas_tipo3(
-	id smallint identity not null constraint pk_id_apuestas_tipo3 primary key,
+	id smallint not null constraint pk_id_apuestas_tipo3 primary key,
 	--------------------------------------------------------------------------
 	apuestasMáximas money not null
 		constraint ck_partidos_tipo3_apuestasMáximas check (apuestasMáximas > 0),
