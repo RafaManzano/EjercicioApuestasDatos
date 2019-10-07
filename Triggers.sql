@@ -147,5 +147,82 @@ AFTER INSERT AS
 	END
 GO
 
+/*
+	Comprobar los beneficios maximos para no dejar pagar la apuesta
+*/
+
+-- Se comprueba que en cada apuesta ganada no se supere el maximo beneficio definido en la tabla
+-- Si esto ocurre, el pago de la apuesta quedaria anulada
+CREATE PROCEDURE noSePagaMaximo @IDApuesta SMALLINT, @Tipo TINYINT 
+AS
+BEGIN
+	IF(@Tipo = 1)
+	BEGIN
+		IF EXISTS(SELECT * FROM Apuestas AS A
+		INNER JOIN Apuestas_tipo1 AS AT1 ON A.id = AT1.id
+		WHERE AT1.apuestasMáximas < A.cantidad * A.cuota)
+		BEGIN
+			ROLLBACK
+		END
+	END
+
+	IF(@Tipo = 2)
+	BEGIN
+		IF EXISTS(SELECT * FROM Apuestas AS A
+		INNER JOIN Apuestas_tipo2 AS AT2 ON A.id = AT2.id
+		WHERE AT2.apuestasMáximas < A.cantidad * A.cuota)
+		BEGIN
+			ROLLBACK
+		END
+	END
+
+	IF(@Tipo = 3)
+	BEGIN
+		IF EXISTS(SELECT * FROM Apuestas AS A
+		INNER JOIN Apuestas_tipo3 AS AT3 ON A.id = AT3.id
+		WHERE AT3.apuestasMáximas < A.cantidad * A.cuota)
+		BEGIN
+			ROLLBACK
+		END
+	END
+END
+
+--Este procedimiento es sumar la apuesta en caso de que este acertada
+GO
+CREATE PROCEDURE sumarApuesta 
+				 @IDApuesta int,
+				 @IDUsuario int
+AS
+BEGIN
+	declare @salgoGanado int
+	declare @acertada bit
+	declare @tipo tinyint
+
+	set @tipo = (Select tipo FROM Apuestas WHERE ID = @IDApuesta)
+	SELECT @acertada = fn.comprobarApuestaAcertada(@IDApuesta,@tipo)
+	SELECT @acertada = fn.comprobarNoSupereLimite(@IDApuesta)
+
+	IF(@acertada = 1)
+	BEGIN
+		
+		SELECT @salgoGanado = saldo + (cantidad*cuota) FROM Apuestas AS A
+		INNER JOIN Usuarios AS U
+			ON U.id = A.id_usuario
+		WHERE @IDApuesta = A.id AND @IDUsuario = id_usuario
+		
+		/*UPDATE Usuarios 
+		SET saldo = @salgoGanado
+		WHERE id = @IDUsuario*/
+		 
+		INSERT INTO Ingresos (cantidad,descripcion,id_usuario)
+		SELECT @salgoGanado,'apuesta ganada',@IDUsuario
+
+	END
+END
+GO
+
+
+--Inserts
+
 INSERT INTO Usuarios
 VALUES (500,'aabb@gmail.com','1234'),(5000,'')
