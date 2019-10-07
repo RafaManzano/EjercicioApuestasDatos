@@ -31,7 +31,7 @@ AFTER INSERT AS
 	BEGIN
 		IF EXISTS (SELECT * FROM inserted AS I
 		INNER JOIN Partidos AS P ON I.id_partido = P.id
-		WHERE I.fechaHora NOT BETWEEN DATEADD(DAY, -2, P.fechaInicio) AND P.fechaFin) 
+		WHERE I.fechaHora NOT BETWEEN DATEADD(DAY, -2, P.fechaInicio) AND DATEADD(MINUTE, -10, P.fechaFin)) 
 		BEGIN
 			RAISERROR ('La apuesta para ese partido no ha empezado o se ha cerrado', 16,1)
 			ROLLBACK
@@ -223,7 +223,6 @@ GO
 
 
 --Inserts
-
 INSERT INTO Usuarios
 VALUES (500,'aabb@gmail.com','1234'),(5000,'bbb@gmail.com','5678'),(8000,'gmasd@gmail.com','9123')
 
@@ -245,3 +244,64 @@ VALUES (2,1000,5,'2')
 
 INSERT INTO Apuestas_tipo3
 VALUES (3,10000,'x')
+
+--Pensar en calcular la cuota
+GO
+CREATE PROCEDURE insertarApuesta @IDUsuario SMALLINT, @cantidad MONEY, @golLocal TINYINT, @golVisitante TINYINT, @puja CHAR(1), @tipo CHAR(1),
+@ApuestasMaximas MONEY
+AS
+BEGIN
+--DECLARE @tipo CHAR(1)
+	
+	--IF()
+
+	INSERT Apuestas (cuota, cantidad, tipo, fechaHora)
+	VALUES (@cantidad * 0.25, @cantidad, @tipo, CURRENT_TIMESTAMP)
+
+	IF(@tipo = 1)
+	BEGIN
+		INSERT Apuestas_tipo1(id, apuestasMáximas, golLocal, golVisitante)
+		VALUES (@@IDENTITY , @ApuestasMaximas, @golLocal, @golVisitante)
+	END
+
+	IF(@tipo = 2 AND @golLocal IS NULL)
+	BEGIN
+		INSERT Apuestas_tipo2(id, apuestasMáximas, gol, puja)
+		VALUES (@@IDENTITY , @ApuestasMaximas, @golVisitante, @puja)
+	END
+	ELSE
+	BEGIN
+		INSERT Apuestas_tipo2(id, apuestasMáximas, gol, puja)
+		VALUES (@@IDENTITY , @ApuestasMaximas, @golLocal, @puja)
+	END
+
+	IF(@tipo = 3)
+	BEGIN
+		INSERT Apuestas_tipo3(id, apuestasMáximas, puja)
+		VALUES (@@IDENTITY , @ApuestasMaximas, @puja)
+	END
+
+END
+GO
+
+--PRUEBAS 
+-- modificarSaldo
+SELECT * FROM Usuarios
+INSERT INTO Ingresos (cantidad,descripcion,id_usuario)
+VALUES (2,'Ingreso',1)
+
+--No se puede modificar las apuestas
+SELECT * FROM Apuestas
+UPDATE Apuestas
+SET cantidad = 3
+WHERE id = 1
+
+DELETE FROM Apuestas
+WHERE id = 1
+
+--partidoAbiertoApuesta
+SELECT * FROM Partidos
+SELECT * FROM Apuestas
+
+INSERT INTO Apuestas
+VALUES (1.2,50,1,'1-01-2019 12:00',1,1)
