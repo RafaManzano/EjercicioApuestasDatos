@@ -82,7 +82,7 @@ SET @acertada = 0
 END
 GO
 
-+GO
+GO
 
 /*
 Trigger que no se pueda modificar despues de concluir la finalizacion del partido
@@ -147,9 +147,5 @@ AFTER INSERT AS
 	END
 GO
 
-/*
-	Comprobar los beneficios maximos para no dejar pagar la apuesta
-*/
-
--- Se comprueba que en cada apuesta ganada no se supere el maximo beneficio definido en la tabla
--- Si esto ocurre, el pago de la apuesta quedaria anulada
+INSERT INTO Usuarios
+VALUES (500,'aabb@gmail.com','1234'),(5000,'')
