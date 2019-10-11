@@ -35,7 +35,7 @@ CREATE TABLE Ingresos(
 	id smallint identity not null constraint pk_id_ingresos primary key,
 	--------------------------------------------------------------------------
 	cantidad int not null,
-	descripcion varchar(15) null,
+	descripcion varchar(100) null,
 	id_usuario smallint not null,
 	constraint fk_id_usuario_Ingresos foreign key (id_usuario) references Usuarios(id)
 )
