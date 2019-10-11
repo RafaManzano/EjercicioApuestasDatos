@@ -160,12 +160,15 @@ GO
 CREATE OR ALTER PROCEDURE noSePagaMaximo @IDApuesta SMALLINT, @Tipo CHAR(1) 
 AS
 BEGIN
+DECLARE @fallado INT = 0
+	BEGIN TRANSACTION
 	IF(@Tipo = 1)
 	BEGIN
 		IF EXISTS(SELECT * FROM Apuestas AS A
 		INNER JOIN Apuestas_tipo1 AS AT1 ON A.id = AT1.id
 		WHERE AT1.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
+			SET @fallado = 1
 			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
 			ROLLBACK
 		END
@@ -177,6 +180,7 @@ BEGIN
 		INNER JOIN Apuestas_tipo2 AS AT2 ON A.id = AT2.id
 		WHERE AT2.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
+			SET @fallado = 1
 			ROLLBACK
 			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
 			
@@ -189,10 +193,16 @@ BEGIN
 		INNER JOIN Apuestas_tipo3 AS AT3 ON A.id = AT3.id
 		WHERE AT3.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
+			SET @fallado = 1
 			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
 			ROLLBACK
 		END
 	END
+	IF(@fallado = 0)
+	BEGIN
+		COMMIT
+	END
+	
 END
 GO
 
@@ -382,6 +392,10 @@ VALUES (1.8,250,2,'13-01-2019 14:00',1,2)
 
 INSERT INTO Apuestas_tipo2
 VALUES (4,2,5,2)
+
+UPDATE Apuestas_tipo2
+SET apuestasMáximas = 2
+WHERE id = 4
 
 --BEGIN TRANSACTION
 EXECUTE noSePagaMaximo 4,2
