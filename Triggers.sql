@@ -41,17 +41,17 @@ AFTER INSERT AS
 
 --Procedimiento que comprueba que una apuesta es ganada o no
 GO
-CREATE PROCEDURE comprobarApuestaAcertada @idApuesta INT, @tipo TINYINT
+CREATE OR ALTER PROCEDURE comprobarApuestaAcertada @idApuesta INT, @tipo CHAR(1), @acertada BIT OUTPUT
 AS
 BEGIN
-DECLARE @acertada BIT
+--DECLARE @acertada BIT
 SET @acertada = 0
 	IF(@tipo = 1)
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
-		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
+		INNER JOIN Partidos AS P ON A.id_partido = P.id
 		INNER JOIN Apuestas_tipo1 AS A1 ON  A1.id = A.id
-		WHERE A1.golLocal = P.golLocal AND A1.golVisitante = P.golVisitante)
+		WHERE A.id = @idApuesta AND A1.golLocal = P.golLocal AND A1.golVisitante = P.golVisitante)
 		BEGIN
 			SET @acertada = 1
 		END
@@ -60,9 +60,9 @@ SET @acertada = 0
 	IF(@tipo = 2)
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
-		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
+		INNER JOIN Partidos AS P ON A.id_partido = P.id
 		INNER JOIN Apuestas_tipo2 AS A2 ON  A2.id = A.id
-		WHERE A2.puja = '1' AND A2.gol = P.golLocal OR A2.puja = '2' AND A2.gol = P.golVisitante)
+		WHERE A.id = @idApuesta AND (A2.puja = '1' AND A2.gol = P.golLocal) OR (A2.puja = '2' AND A2.gol = P.golVisitante))
 		BEGIN
 			SET @acertada = 1
 		END
@@ -71,9 +71,9 @@ SET @acertada = 0
 	IF(@tipo = 3)
 	BEGIN
 		IF EXISTS (SELECT * FROM Apuestas AS A
-		INNER JOIN Partidos AS P ON A.id_partido = P.id AND A.id = @idApuesta
+		INNER JOIN Partidos AS P ON A.id_partido = P.id
 		INNER JOIN Apuestas_tipo3 AS A3 ON  A3.id = A.id
-		WHERE A3.puja = '1' AND P.golLocal > P.golVisitante OR A3.puja = '2' AND P.golLocal < P.golVisitante OR A3.puja = 'x' AND P.golLocal = P.golVisitante)
+		WHERE A.id = @idApuesta AND (A3.puja = '1' AND P.golLocal > P.golVisitante) OR (A3.puja = '2' AND P.golLocal < P.golVisitante) OR (A3.puja = 'x' AND P.golLocal = P.golVisitante))
 		BEGIN
 			SET @acertada = 1
 		END
@@ -83,12 +83,14 @@ END
 GO
 
 GO
-
+/*
+ESTAN COMENTADOS PORQUE EN EL TRIGGER APUESTA ABIERTA LO CONTROLAMOS TODO
+*/
 /*
 Trigger que no se pueda modificar despues de concluir la finalizacion del partido
-*/
+
 GO
-CREATE TRIGGER partidoFinalizado ON Partidos
+CREATE OR ALTER TRIGGER partidoFinalizado ON Partidos
 AFTER UPDATE AS 
 	BEGIN
 		IF EXISTS (SELECT * FROM inserted AS I
@@ -106,22 +108,23 @@ GO
 	Trigger que no se pueda antes de empezar el partido modificar el marcador
 */
 GO
-CREATE TRIGGER modificarMarcador ON Partidos
-AFTER UPDATE, INSERT AS 
+CREATE OR ALTER TRIGGER modificarAntesMarcador ON Partidos
+AFTER UPDATE AS 
 	BEGIN
 		IF EXISTS (SELECT * FROM inserted AS I
 		INNER JOIN Partidos AS P ON I.id = P.id
 		--INNER JOIN deleted AS D ON P.id = D.id
-		WHERE GETDATE() < DATEADD(DAY, -2, P.fechaInicio) AND I.golLocal > 0 AND I.golVisitante > 0) 
+		WHERE (GETDATE() NOT BETWEEN DATEADD(DAY, -2, P.fechaInicio) AND P.fechaInicio)) --AND I.golLocal = 0 AND I.golVisitante = 0)
 		BEGIN
-			RAISERROR ('El partido no ha empezado o los goles deben ser 0 a 0', 16,1)
+			RAISERROR ('La apuesta del partido no ha empezado o los goles deben ser 0 a 0', 16,1)
 			ROLLBACK
 		END
 	END
 GO
-
+*/
 --1er Trigger actualiza el saldo del usuario cuando realiza una apuesta
 GO	
+--DROP TRIGGER actualizarSaldo
 CREATE OR ALTER TRIGGER actualizarSaldo on Apuestas
 AFTER INSERT AS
 	BEGIN
@@ -139,10 +142,10 @@ AFTER INSERT AS
 			END
 		ELSE
 			BEGIN
-				UPDATE Usuarios
-				SET saldo -= @cantidad WHERE id=@id_usuario
+				--UPDATE Usuarios
+				--SET saldo -= @cantidad WHERE id=@id_usuario
 				--Insertamos el ingreso
-				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad,'Apuesta realizada',@id_usuario)
+				INSERT INTO Ingresos (cantidad, descripcion, id_usuario) VALUES (@cantidad * -1,'Apuesta realizada',@id_usuario)
 			END
 	END
 GO
@@ -153,15 +156,17 @@ GO
 
 -- Se comprueba que en cada apuesta ganada no se supere el maximo beneficio definido en la tabla
 -- Si esto ocurre, el pago de la apuesta quedaria anulada
-CREATE PROCEDURE noSePagaMaximo @IDApuesta SMALLINT, @Tipo TINYINT 
+GO
+CREATE OR ALTER PROCEDURE noSePagaMaximo @IDApuesta SMALLINT, @Tipo CHAR(1) 
 AS
 BEGIN
 	IF(@Tipo = 1)
 	BEGIN
 		IF EXISTS(SELECT * FROM Apuestas AS A
 		INNER JOIN Apuestas_tipo1 AS AT1 ON A.id = AT1.id
-		WHERE AT1.apuestasMáximas < A.cantidad * A.cuota)
+		WHERE AT1.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
+			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
 			ROLLBACK
 		END
 	END
@@ -170,9 +175,11 @@ BEGIN
 	BEGIN
 		IF EXISTS(SELECT * FROM Apuestas AS A
 		INNER JOIN Apuestas_tipo2 AS AT2 ON A.id = AT2.id
-		WHERE AT2.apuestasMáximas < A.cantidad * A.cuota)
+		WHERE AT2.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
 			ROLLBACK
+			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
+			
 		END
 	END
 
@@ -180,12 +187,14 @@ BEGIN
 	BEGIN
 		IF EXISTS(SELECT * FROM Apuestas AS A
 		INNER JOIN Apuestas_tipo3 AS AT3 ON A.id = AT3.id
-		WHERE AT3.apuestasMáximas < A.cantidad * A.cuota)
+		WHERE AT3.apuestasMáximas < A.cantidad * A.cuota AND A.id = @IDApuesta)
 		BEGIN
+			RAISERROR('Tu apuesta supera el maximo permitido en esta apuesta',16,1)
 			ROLLBACK
 		END
 	END
 END
+GO
 
 --Este procedimiento es sumar la apuesta en caso de que este acertada
 GO
@@ -305,3 +314,76 @@ SELECT * FROM Apuestas
 
 INSERT INTO Apuestas
 VALUES (1.2,50,1,'1-01-2019 12:00',1,1)
+
+--partidoFinalizado
+/*
+SELECT * FROM Partidos
+
+INSERT INTO Partidos 
+VALUES(0,2,'08-10-2019 12:00','08-10-2019 13:45','Villanueva','Xerez')
+UPDATE Partidos
+SET golLocal = 5
+WHERE id = 4
+
+
+INSERT INTO Partidos 
+VALUES(1,2,'08-10-2019 09:00','08-10-2019 10:45','Sevilla','Lora del Rio')
+UPDATE Partidos
+SET golLocal = 5
+WHERE id = 6
+
+--modificarAntesMarcador
+SELECT * FROM Partidos
+UPDATE Partidos
+SET golLocal = 1
+WHERE id = 4
+
+INSERT INTO Partidos 
+VALUES(1,2,'18-10-2019 09:00','18-10-2019 10:45','Leon','Salamanca')
+
+UPDATE Partidos
+SET golLocal = 19
+WHERE id = 7
+*/
+
+--actualizarSaldo
+SELECT * FROM Apuestas
+SELECT * FROM Apuestas_tipo1
+SELECT * FROM Apuestas_tipo2
+SELECT * FROM Ingresos
+SELECT * FROM Usuarios
+SELECT * FROM Partidos
+
+INSERT INTO Apuestas
+VALUES (1.2,50,2,'08-10-2019 12:00',1,4)
+
+--comprobarApuestaAcertada
+--Acertado
+BEGIN TRANSACTION
+--DECLARE @acertada BIT
+EXECUTE @acertada = comprobarApuestaAcertada 1,1,@acertada
+PRINT @acertada
+--ROLLBACK
+--COMMIT
+
+--Fallado
+INSERT INTO Apuestas_tipo1
+VALUES (2,2,0,0)
+BEGIN TRANSACTION
+DECLARE @acertada BIT
+EXECUTE @acertada = comprobarApuestaAcertada 2,1,@acertada
+PRINT @acertada
+--ROLLBACK
+--COMMIT
+
+--noSePagaMaximo
+INSERT INTO Apuestas
+VALUES (1.8,250,2,'13-01-2019 14:00',1,2)
+
+INSERT INTO Apuestas_tipo2
+VALUES (4,2,5,2)
+
+--BEGIN TRANSACTION
+EXECUTE noSePagaMaximo 4,2
+--ROLLBACK
+--COMMIT

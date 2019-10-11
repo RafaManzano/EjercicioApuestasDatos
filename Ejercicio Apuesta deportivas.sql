@@ -35,18 +35,19 @@ CREATE TABLE Ingresos(
 	id smallint identity not null constraint pk_id_ingresos primary key,
 	--------------------------------------------------------------------------
 	cantidad int not null,
-	descripcion varchar(15) null,
+	descripcion varchar(100) null,
 	id_usuario smallint not null,
 	constraint fk_id_usuario_Ingresos foreign key (id_usuario) references Usuarios(id)
 )
 
+--DROP TABLE Apuestas
 CREATE TABLE Apuestas(
 	id smallint identity not null constraint pk_id_apuestas primary key,
 	--------------------------------------------------------------------------
 	cuota decimal(5,2) not null
 		constraint ck_Apuestas_cuota check(cuota > 1),
-	cantidad money not null
-		constraint ck_Apuestas_cantidad check(cantidad > 0),
+	cantidad int not null,
+		--constraint ck_Apuestas_cantidad check(cantidad > 0),
 	tipo char(1) not null
 		constraint ck_Apuestas_tipo check(tipo in ('1','2','3')),
 	fechaHora datetime not null,
